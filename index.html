@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Validador e Buscador de CNPJ</title>
+</head>
+<body>
+  
+</body>
+<script>
+// Função para validar CNPJ
+    function validarCNPJ(cnpj) {
+        cnpj = cnpj.replace(/[^\d]+/g, '');
+
+        if (cnpj === '' || cnpj.length !== 14) return false;
+        if (/^(\d)\1+$/.test(cnpj)) return false;
+
+        let tamanho = cnpj.length - 2;
+        let numeros = cnpj.substring(0, tamanho);
+        const digitos = cnpj.substring(tamanho);
+        let soma = 0;
+        let pos = tamanho - 7;
+
+        for (let i = tamanho; i >= 1; i--) {
+            soma += numeros.charAt(tamanho - i) * pos--;
+            if (pos < 2) pos = 9;
+        }
+
+        let resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
+        if (resultado != digitos.charAt(0)) return false;
+
+        tamanho = tamanho + 1;
+        numeros = cnpj.substring(0, tamanho);
+        soma = 0;
+        pos = tamanho - 7;
+        for (let i = tamanho; i >= 1; i--) {
+            soma += numeros.charAt(tamanho - i) * pos--;
+            if (pos < 2) pos = 9;
+        }
+        resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
+        if (resultado != digitos.charAt(1)) return false;
+
+        return true;
+    }
+
+    // Função para buscar dados da empresa após validação do CNPJ
+    async function validarEObterDadosCNPJ(cnpj) {
+        const cnpjValido = validarCNPJ(cnpj);
+
+        if (!cnpjValido) {
+            console.log('CNPJ inválido.');
+            return;
+        }
+
+        try {
+            const url = `https://api.invertexto.com/v1/cnpj/${cnpj.replace(/[^\d]+/g, '')}?token=7213|Utb7msZPQZlB2CV6cwDsXYvVPm6aNZph`;
+            const response = await fetch(url, {
+                method: 'GET'
+            });
+
+            if (!response.ok) {
+                throw new Error('Não foi possível obter os dados da empresa.');
+            }
+
+            const dadosEmpresa = await response.json();
+            return dadosEmpresa; // Retorne os dados da empresa ou manipule conforme necessário
+        } catch (error) {
+            console.error('Erro ao buscar dados da empresa:', error);
+        }
+    }
+
+    validarEObterDadosCNPJ('21.567.489/0001-58').then(dadosEmpresa => {
+        if (dadosEmpresa) {
+            console.log('Dados da empresa:', dadosEmpresa);
+        }
+    });
+</script>
+
+</html>
